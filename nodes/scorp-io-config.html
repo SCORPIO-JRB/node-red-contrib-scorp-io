@@ -1,0 +1,96 @@
+<script type="text/javascript">
+    RED.nodes.registerType('scorp-io-config', {
+        category: 'config',
+        defaults: {
+            name:       { value: '' },
+            clientId:   { value: '', required: true },
+            projectId:  { value: '', required: true },
+            edgeNodeId: { value: '', required: true },
+            mode:       { value: 'test' },
+            login:      { value: '' }
+        },
+        credentials: {
+            password: { type: 'password' }
+        },
+        label: function() {
+            const modeTag = this.mode === 'production' ? '🟢 PROD' : '🧪 TEST';
+            return this.name || ('SCorp-io [' + (this.projectId || '?') + '] ' + modeTag);
+        },
+        oneditprepare: function() {
+            // Pré-remplir le mot de passe depuis credentials
+            if (this.credentials && this.credentials.password) {
+                $('#node-config-input-password').val(this.credentials.password);
+            }
+            // Afficher/masquer avertissement selon mode
+            $('#node-config-input-mode').on('change', function() {
+                if ($(this).val() === 'production') {
+                    $('#scorp-mode-warning').show();
+                } else {
+                    $('#scorp-mode-warning').hide();
+                }
+            }).trigger('change');
+        },
+        oneditsave: function() {
+            // Sauvegarder le mot de passe dans credentials
+            this.credentials = this.credentials || {};
+            this.credentials.password = $('#node-config-input-password').val();
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="scorp-io-config">
+
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Nom</label>
+        <input type="text" id="node-config-input-name" placeholder="ex: SCorp-io Production" style="width:70%">
+    </div>
+
+    <!-- MODE -->
+    <div class="form-row">
+        <label for="node-config-input-mode"><i class="fa fa-toggle-on"></i> Mode</label>
+        <select id="node-config-input-mode" style="width:70%">
+            <option value="test">🧪 Test (simulation, pas d'envoi MQTT)</option>
+            <option value="production">🟢 Production (envoi MQTT réel)</option>
+        </select>
+    </div>
+    <div id="scorp-mode-warning" class="form-tips"
+         style="display:none; background:#fff3cd; border-left:4px solid #ffc107; padding:8px; margin-bottom:10px;">
+        ⚠️ Mode <b>Production</b> activé — les messages MQTT seront envoyés au broker SCorp-io.
+    </div>
+
+    <hr/>
+    <div class="form-row">
+        <label style="width:100%;font-weight:bold;"><i class="fa fa-plug"></i> Connexion MQTT</label>
+    </div>
+    <div class="form-tips" style="margin-bottom:12px;">
+        Broker fixe : <b>broker-public-prod.scorp-io.com : 8883</b> (TLS automatique)
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-clientId"><i class="fa fa-id-card"></i> Client ID</label>
+        <input type="text" id="node-config-input-clientId" placeholder="ex: my-edge-client-01" style="width:70%">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-login"><i class="fa fa-user"></i> Login</label>
+        <input type="text" id="node-config-input-login" placeholder="Nom d'utilisateur MQTT" style="width:70%" autocomplete="off">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-password"><i class="fa fa-lock"></i> Mot de passe</label>
+        <input type="password" id="node-config-input-password" placeholder="Mot de passe MQTT" style="width:70%" autocomplete="new-password">
+    </div>
+
+    <hr/>
+    <div class="form-row">
+        <label style="width:100%;font-weight:bold;"><i class="fa fa-sitemap"></i> Identifiants SCorp-io</label>
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-projectId"><i class="fa fa-folder"></i> Project ID</label>
+        <input type="text" id="node-config-input-projectId" placeholder="ex: my-project" style="width:70%">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-edgeNodeId"><i class="fa fa-microchip"></i> Node ID</label>
+        <input type="text" id="node-config-input-edgeNodeId" placeholder="ex: edge-node-01" style="width:70%">
+    </div>
+
+</script>

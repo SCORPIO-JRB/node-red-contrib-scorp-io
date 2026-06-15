@@ -1,0 +1,300 @@
+<script type="text/javascript">
+
+const SCORP_DATA_TYPES = [
+    'Int8','Int16','Int32','Int64',
+    'UInt8','UInt16','UInt32','UInt64',
+    'Float','Double','Boolean','String','DateTime'
+];
+
+function scorpMakeMetricRow(container, metric) {
+    metric = metric || { name: '', dataType: 'String', valuePath: '' };
+    const row = $('<div/>').css({
+        display: 'flex', gap: '4px', alignItems: 'center', width: '100%', padding: '2px 0'
+    }).appendTo(container);
+
+    $('<input/>', { type: 'text', placeholder: 'ex: pompe-1/etats', class: 'scorp-metric-name' })
+        .css({ flex: '2', minWidth: 0 }).val(metric.name || '').appendTo(row);
+
+    const sel = $('<select/>', { class: 'scorp-metric-datatype' })
+        .css({ flex: '1.3', minWidth: 0 }).appendTo(row);
+    SCORP_DATA_TYPES.forEach(function(t) {
+        $('<option/>', { value: t, text: t }).appendTo(sel);
+    });
+    sel.val(metric.dataType || 'String');
+
+    $('<input/>', { type: 'text', placeholder: 'msg.payload.pompe1.etats', class: 'scorp-metric-valuepath' })
+        .css({ flex: '2.5', minWidth: 0 }).val(metric.valuePath || '').appendTo(row);
+}
+
+function scorpMakeDeviceBlock(container, device) {
+    device = device || { deviceId: '', metrics: [] };
+
+    const block = $('<div/>').addClass('scorp-device-block').css({
+        border: '1px solid #ccc', borderRadius: '4px', marginBottom: '8px', background: '#f9f9f9'
+    }).appendTo(container);
+
+    // En-tête
+    const header = $('<div/>').css({
+        display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 8px',
+        background: '#e8f4f8', borderBottom: '1px solid #ccc',
+        borderRadius: '4px 4px 0 0', cursor: 'pointer'
+    }).appendTo(block);
+
+    const toggle = $('<span/>').css({
+        fontFamily: 'monospace', fontWeight: 'bold', minWidth: '12px', color: '#555'
+    }).text('▼').appendTo(header);
+
+    $('<label/>').css({ fontWeight: 'bold', marginBottom: 0, flex: '0 0 auto' })
+        .text('Device ID :').appendTo(header);
+
+    $('<input/>', { type: 'text', placeholder: 'ex: pompe-1', class: 'scorp-device-id' })
+        .css({ flex: '1', minWidth: 0 }).val(device.deviceId || '').appendTo(header);
+
+    $('<button/>', { type: 'button' })
+        .addClass('red-ui-button red-ui-button-small')
+        .css({ marginLeft: 'auto', flexShrink: 0 })
+        .html('<i class="fa fa-trash"></i>')
+        .on('click', function(e) { e.stopPropagation(); block.remove(); })
+        .appendTo(header);
+
+    // Corps
+    const body = $('<div/>').css({ padding: '8px' }).appendTo(block);
+
+    // En-têtes colonnes
+    $('<div/>').css({
+        display: 'flex', gap: '4px',
+        fontSize: '11px', color: '#888', fontWeight: 'bold', padding: '0 0 4px 0'
+    }).html(
+        '<span style="flex:2">Nom métrique</span>' +
+        '<span style="flex:1.3">Type</span>' +
+        '<span style="flex:2.5">Chemin (depuis msg)</span>'
+    ).appendTo(body);
+
+    // editableList SANS bouton natif
+    const metricList = $('<ol/>').css({ paddingLeft: 0, marginBottom: '6px' }).appendTo(body);
+    metricList.editableList({
+        addItem: function(rowContainer, i, opt) {
+            const m = (opt && opt.name !== undefined) ? opt : { name: '', dataType: 'String', valuePath: '' };
+            scorpMakeMetricRow(rowContainer, m);
+        },
+        removable:  true,
+        sortable:   true,
+        addButton:  false   // ← supprime le bouton natif dupliqué
+    });
+
+    (device.metrics || []).forEach(function(m) { metricList.editableList('addItem', m); });
+
+    // Bouton unique "Ajouter une métrique"
+    $('<button/>', { type: 'button' })
+        .addClass('red-ui-button red-ui-button-small')
+        .html('<i class="fa fa-plus"></i> Ajouter une métrique')
+        .on('click', function() { metricList.editableList('addItem', {}); })
+        .appendTo(body);
+
+    // Toggle collapse
+    header.on('click', function(e) {
+        if ($(e.target).is('input, button, i')) return;
+        if (body.is(':visible')) { body.hide(); toggle.text('▶'); }
+        else                     { body.show(); toggle.text('▼'); }
+    });
+
+    block.data('metricList', metricList);
+    return block;
+}
+
+RED.nodes.registerType('scorp-io-device', {
+    category: 'SCorp-io',
+    color:    '#00AEEF',
+    defaults: {
+        name:           { value: '' },
+        config:         { value: '', type: 'scorp-io-config', required: true },
+        devices:        { value: [] },
+        birthOnDeploy:  { value: true  },
+        birthPeriodic:  { value: false },
+        birthInterval:  { value: '24h' }
+    },
+    inputs:  1,
+    outputs: 1,
+    icon:    'bridge.svg',
+    inputLabels:  ['data (msg.topic="birth" pour forcer DBIRTH)'],
+    outputLabels: ['debug (topic + payload)'],
+    label: function() {
+        const n = (this.devices || []).length;
+        return this.name || ('SCorp-io — ' + n + ' device' + (n > 1 ? 's' : ''));
+    },
+    labelStyle: function() { return this.name ? 'node_label_italic' : ''; },
+
+    oneditprepare: function() {
+        const node = this;
+
+        // ── Devices ──
+        const container = $('#scorp-devices-container');
+        (node.devices || []).forEach(function(d) { scorpMakeDeviceBlock(container, d); });
+        $('#scorp-add-device').on('click', function() {
+            scorpMakeDeviceBlock(container, { deviceId: '', metrics: [] });
+        });
+
+        // ── DBIRTH au déploiement ──
+        $('#scorp-birth-on-deploy').prop('checked', node.birthOnDeploy !== false);
+
+        // ── DBIRTH périodique ──
+        const periodicChk = $('#scorp-birth-periodic');
+        const intervalSel = $('#scorp-birth-interval');
+
+        periodicChk.prop('checked', !!node.birthPeriodic);
+        intervalSel.val(node.birthInterval || '24h');
+        intervalSel.prop('disabled', !node.birthPeriodic);
+
+        periodicChk.on('change', function() {
+            intervalSel.prop('disabled', !$(this).prop('checked'));
+        });
+
+        // ── Bouton forcer DBIRTH ──
+        const btn    = $('#scorp-btn-dbirth');
+        const status = $('#scorp-btn-dbirth-status');
+
+        if (!node.id) { btn.prop('disabled', true); }
+
+        btn.on('click', function() {
+            btn.prop('disabled', true);
+            status.text('Envoi…').css('color', '#aaa');
+            $.ajax({
+                method: 'POST',
+                url:    'scorp-io/dbirth/' + node.id,
+                success: function(data) {
+                    status.text('✅ DBIRTH envoyé : ' + data.devices.join(', ')).css('color', 'green');
+                    btn.prop('disabled', false);
+                },
+                error: function(xhr) {
+                    const msg = xhr.responseJSON ? xhr.responseJSON.error : xhr.statusText;
+                    status.text('❌ ' + msg).css('color', 'red');
+                    btn.prop('disabled', false);
+                }
+            });
+        });
+    },
+
+    oneditsave: function() {
+        // Devices
+        const devices = [];
+        $('#scorp-devices-container .scorp-device-block').each(function() {
+            const block    = $(this);
+            const deviceId = block.find('.scorp-device-id').val().trim();
+            if (!deviceId) return;
+            const metrics    = [];
+            const metricList = block.data('metricList');
+            if (metricList) {
+                metricList.editableList('items').each(function() {
+                    const name      = $(this).find('.scorp-metric-name').val().trim();
+                    const dataType  = $(this).find('.scorp-metric-datatype').val();
+                    const valuePath = $(this).find('.scorp-metric-valuepath').val().trim();
+                    if (name) metrics.push({ name, dataType, valuePath });
+                });
+            }
+            devices.push({ deviceId, metrics });
+        });
+        this.devices = devices;
+
+        // DBIRTH config
+        this.birthOnDeploy = $('#scorp-birth-on-deploy').prop('checked');
+        this.birthPeriodic = $('#scorp-birth-periodic').prop('checked');
+        this.birthInterval = $('#scorp-birth-interval').val();
+    }
+});
+</script>
+
+<script type="text/html" data-template-name="scorp-io-device">
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Nom</label>
+        <input type="text" id="node-input-name" placeholder="ex: Mes pompes">
+    </div>
+    <div class="form-row">
+        <label for="node-input-config"><i class="fa fa-cog"></i> Config</label>
+        <input type="text" id="node-input-config">
+    </div>
+
+    <hr/>
+
+    <!-- DEVICES -->
+    <div class="form-row">
+        <label style="width:100%; font-weight:bold; margin-bottom:6px;">
+            <i class="fa fa-microchip"></i> Devices
+        </label>
+        <div id="scorp-devices-container" style="width:100%;"></div>
+        <button type="button" id="scorp-add-device" class="red-ui-button" style="margin-top:6px;">
+            <i class="fa fa-plus"></i> Ajouter un device
+        </button>
+    </div>
+
+    <hr/>
+
+    <!-- STRATÉGIE DBIRTH -->
+    <div class="form-row" style="width:100%;">
+        <label style="width:100%; font-weight:bold; margin-bottom:8px;">
+            <i class="fa fa-refresh"></i> Émission DBIRTH
+        </label>
+
+        <!-- Option A : au déploiement -->
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; width:100%;">
+            <input type="checkbox" id="scorp-birth-on-deploy" style="width:auto; margin:0; flex-shrink:0;">
+            <label for="scorp-birth-on-deploy" style="margin:0; font-weight:normal; flex:1;">
+                Envoyer un DBIRTH automatiquement après déploiement / redémarrage
+            </label>
+        </div>
+
+        <!-- Option B : périodique -->
+        <div style="display:flex; align-items:center; gap:8px; width:100%;">
+            <input type="checkbox" id="scorp-birth-periodic" style="width:auto; margin:0; flex-shrink:0;">
+            <label for="scorp-birth-periodic" style="margin:0; font-weight:normal;">
+                Envoyer un DBIRTH périodiquement toutes les
+            </label>
+            <select id="scorp-birth-interval" style="width:auto; flex-shrink:0;">
+                <option value="1h">1 heure</option>
+                <option value="6h">6 heures</option>
+                <option value="12h">12 heures</option>
+                <option value="24h">24 heures</option>
+                <option value="48h">48 heures</option>
+            </select>
+        </div>
+    </div>
+
+    <hr/>
+
+    <!-- BOUTON FORCER DBIRTH -->
+    <div class="form-row">
+        <label style="width:100%; font-weight:bold; margin-bottom:6px;">
+            <i class="fa fa-bolt"></i> Actions
+        </label>
+        <button type="button" id="scorp-btn-dbirth" class="red-ui-button">
+            <i class="fa fa-refresh"></i> Forcer DBIRTH maintenant
+        </button>
+        <span id="scorp-btn-dbirth-status" style="margin-left:10px; font-size:12px;"></span>
+    </div>
+
+    <hr/>
+
+    <div class="form-tips">
+        <b>Entrée :</b> message normal → <b>DDATA</b> auto &nbsp;|&nbsp;
+        <code>msg.topic = "birth"</code> → <b>DBIRTH</b><br/>
+        <b>Chemins :</b> <code>msg.payload.pompe1.etats</code> ou <code>msg.pompe.etat</code>
+    </div>
+
+</script>
+
+<script type="text/html" data-help-name="scorp-io-device">
+    <p>Nœud SCorp-io multi-devices. Publie <b>DBIRTH</b> et <b>DDATA</b> via MQTTS.</p>
+    <h3>Entrée</h3>
+    <dl class="message-properties">
+        <dt>msg.topic <span class="property-type">string</span></dt>
+        <dd><code>"birth"</code> → force DBIRTH pour tous les devices.</dd>
+        <dt>msg.payload <span class="property-type">object</span></dt>
+        <dd>Routage automatique : DDATA publié pour chaque device dont une métrique est résolvable.</dd>
+    </dl>
+    <h3>Sortie — debug</h3>
+    <dl class="message-properties">
+        <dt>msg.topic</dt><dd>Topic MQTT publié.</dd>
+        <dt>msg.payload</dt><dd>Trame publiée.</dd>
+        <dt>msg._scorp</dt><dd>type, mode, device, simulated.</dd>
+    </dl>
+</script>

@@ -1,0 +1,43 @@
+{
+  "scorp-io-config": {
+    "label": {
+      "clientid": "Client ID",
+      "login": "Login",
+      "password": "Password",
+      "projectid": "Project ID",
+      "edgenodeid": "Edge Node ID"
+    },
+    "tooltip": {
+      "clientid": "Unique MQTT connection identifier",
+      "projectid": "SCorp-io project identifier",
+      "edgenodeid": "Edge node identifier"
+    },
+    "status": {
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "connecting": "Connecting...",
+      "error": "Connection error"
+    }
+  },
+  "scorp-io-device": {
+    "label": {
+      "deviceid": "Device ID",
+      "config": "SCorp-io Config",
+      "metrics": "Metrics",
+      "metricname": "Name",
+      "metricdatatype": "Data Type",
+      "metricvalue": "Value (msg.payload path)"
+    },
+    "placeholder": {
+      "deviceid": "e.g. pompe-1",
+      "metricname": "e.g. pompe-1/etats",
+      "metricvalue": "e.g. pompe1.etats"
+    },
+    "status": {
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "birth_sent": "DBIRTH sent",
+      "data_sent": "DDATA sent"
+    }
+  }
+}
