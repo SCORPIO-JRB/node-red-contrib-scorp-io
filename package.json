@@ -2,7 +2,14 @@
   "name": "node-red-contrib-scorp-io",
   "version": "0.1.0",
   "description": "Node-RED palette for SCorp-io MQTTS integration (DBIRTH / DDATA)",
-  "keywords": ["node-red", "scorp-io", "mqtt", "mqtts", "iot", "industrial"],
+  "keywords": [
+    "node-red",
+    "scorp-io",
+    "mqtt",
+    "mqtts",
+    "iot",
+    "industrial"
+  ],
   "author": "",
   "license": "MIT",
   "node-red": {
@@ -16,15 +23,16 @@
     "mqtt": "^5.3.4"
   },
   "devDependencies": {
-    "node-red-node-test-helper": "^0.3.4",
     "mocha": "^10.4.0",
+    "node-red": "^3.1.15",
+    "node-red-node-test-helper": "^0.3.4",
     "should": "^13.2.3"
   },
   "scripts": {
-    "test":         "mocha test/**/*_spec.js --timeout 5000",
+    "test": "mocha test/**/*_spec.js --timeout 5000",
     "test:helpers": "mocha test/scorp-io-helpers_spec.js --timeout 5000",
-    "test:config":  "mocha test/scorp-io-config_spec.js  --timeout 5000",
-    "test:device":  "mocha test/scorp-io-device_spec.js  --timeout 5000"
+    "test:config": "mocha test/scorp-io-config_spec.js  --timeout 5000",
+    "test:device": "mocha test/scorp-io-device_spec.js  --timeout 5000"
   },
   "engines": {
     "node": ">=18.0.0"
