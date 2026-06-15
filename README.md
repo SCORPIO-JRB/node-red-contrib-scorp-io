@@ -1,100 +1,171 @@
-# node-red-contrib-scorp-io
+# @scorp-io/node-red-contrib-scorp-io
 
-Palette Node-RED pour l'intégration d'équipements industriels avec la plateforme **SCorp-io** via MQTT sécurisé (MQTTS).
+Node-RED nodes for SCorp-io MQTTS integration.
+
+The package exposes a shared SCorp-io configuration node and a multi-device publishing node for:
+
+- `DBIRTH` messages: device metric declarations;
+- `DDATA` messages: device metric values with timestamps.
+
+## Requirements
+
+- Node.js `>=18.0.0`
+- Node-RED `>=3.0.0`
+- SCorp-io MQTT credentials for production mode
 
 ## Installation
 
-### Via Node-RED (recommandé)
-Dans Node-RED > Menu > Manage palette > Install :
-```
-node-red-contrib-scorp-io
+### From the Node-RED editor
+
+Open **Menu → Manage palette → Install**, then search for:
+
+```text
+@scorp-io/node-red-contrib-scorp-io
 ```
 
-### Via npm
+### From npm
+
+Run from the Node-RED user directory, usually `~/.node-red`:
+
 ```bash
 cd ~/.node-red
-npm install node-red-contrib-scorp-io
+npm install @scorp-io/node-red-contrib-scorp-io
 ```
 
----
+Restart Node-RED after installation.
 
-## Nœuds disponibles
+## Nodes
 
-### `scorp-io-config` — Configuration
-Nœud de configuration partagé. Définit la connexion au broker SCorp-io.
+### `scorp-io-config`
 
-| Champ | Description |
-|-------|-------------|
-| Client ID | Identifiant unique de connexion MQTT |
-| Login | Nom d'utilisateur MQTT |
-| Password | Mot de passe MQTT |
-| Project ID | Identifiant du projet SCorp-io |
-| Edge Node ID | Identifiant du nœud edge |
+Shared configuration node for the SCorp-io MQTT connection.
 
-**Connexion automatique** au démarrage sur :
-- Host : `broker-public-prod.scorp-io.com`
-- Port : `8883`
-- TLS : activé (certificat serveur uniquement)
+| Field | Description |
+| --- | --- |
+| Mode | `test` disables MQTT publishing; `production` publishes to the broker |
+| Client ID | MQTT client identifier |
+| Login | MQTT username |
+| Password | MQTT password, stored as a Node-RED credential |
+| Project ID | SCorp-io project identifier used in MQTT topics |
+| Node ID | Edge node identifier used in MQTT topics |
 
----
+Production broker endpoint:
 
-### `scorp-io-device` — Device
-Représente un équipement physique. Publie les messages **DBIRTH** et **DDATA**.
+```text
+mqtts://broker-public-prod.scorp-io.com:8883
+```
 
-#### Entrées
-| Entrée | Rôle |
-|--------|------|
-| **1 — data** | Reçoit `msg.payload` et publie un DDATA avec les valeurs résolues |
-| **2 — birth** | Force la (ré)émission d'un DBIRTH |
+### `scorp-io-device`
 
-#### Configuration des métriques
-Chaque métrique comporte :
-- **name** : nom fixe ou chemin dans `msg.payload` (ex: `pompe1.etats`)
-- **dataType** : `Int8`, `Int16`, `Int32`, `Int64`, `UInt8`, `UInt16`, `UInt32`, `UInt64`, `Float`, `Double`, `Boolean`, `String`, `DateTime`
-- **value** : chemin dans `msg.payload` (ex: `pompe1.etats`)
+Multi-device node that builds and publishes SCorp-io `DBIRTH` and `DDATA` payloads.
 
----
+#### Input
 
-## Format des messages
+The node has one input.
+
+| Message | Behavior |
+| --- | --- |
+| `msg.topic === "birth"` | Emits a `DBIRTH` for all configured devices |
+| `msg.deviceId` set | Emits `DDATA` for the matching configured device |
+| regular payload | Emits `DDATA` for every device where at least one metric path resolves |
+
+#### Output
+
+The node has one debug output containing the generated message:
+
+| Property | Description |
+| --- | --- |
+| `msg.topic` | MQTT topic that was/would be published |
+| `msg.payload` | Generated SCorp-io payload |
+| `msg._scorp.type` | `DBIRTH` or `DDATA` |
+| `msg._scorp.device` | Target device id |
+| `msg._scorp.simulated` | `true` in test mode |
+
+## Metric configuration
+
+Each device has a list of metrics.
+
+| Metric field | Description | Example |
+| --- | --- | --- |
+| `name` | Metric name sent to SCorp-io | `pompe-1/etats` |
+| `dataType` | Metric type | `Integer`, `Boolean`, `Float` |
+| `valuePath` | Path resolved from incoming `msg` for `DDATA` | `msg.payload.pompe1.etats` |
+
+Supported value paths:
+
+```text
+msg.payload.pompe1.etats
+msg.pompe.etat
+pompe1.etats
+```
+
+Paths without the `msg.` prefix are resolved from `msg.payload`.
+
+## Topic format
+
+```text
+mqtts/{PROJECT_ID}/{MESSAGE_TYPE}/{EDGE_NODE_ID}/{DEVICE_ID}
+```
+
+Examples:
+
+```text
+mqtts/my-project/DBIRTH/edge-01/pompe-1
+mqtts/my-project/DDATA/edge-01/pompe-1
+```
+
+## Payload examples
 
 ### DBIRTH
-```
-Topic   : mqtts/{PROJECT_ID}/DBIRTH/{EDGE_NODE_ID}/{DEVICE_ID}
-Payload : {
+
+```json
+{
   "metrics": [
-    { "name": "pompe-1/etats",  "dataType": "Integer" },
+    { "name": "pompe-1/etats", "dataType": "Integer" },
     { "name": "pompe-1/defaut", "dataType": "Boolean" }
   ]
 }
 ```
 
 ### DDATA
-```
-Topic   : mqtts/{PROJECT_ID}/DDATA/{EDGE_NODE_ID}/{DEVICE_ID}
-Payload : {
+
+```json
+{
   "metrics": [
-    { "name": "pompe-1/etats",  "dataType": "Integer", "value": 1     },
-    { "name": "pompe-1/defaut", "dataType": "Boolean", "value": false }
+    {
+      "name": "pompe-1/etats",
+      "timestamp": 1710000000000,
+      "dataType": "Integer",
+      "value": 1
+    },
+    {
+      "name": "pompe-1/defaut",
+      "timestamp": 1710000000000,
+      "dataType": "Boolean",
+      "value": false
+    }
   ]
 }
 ```
 
----
+## Example flow
 
-## Exemple de msg.payload entrant
+An importable example is provided in:
 
-```json
-{
-  "pompe1": {
-    "etats": 1,
-    "defaut": false,
-    "status": 3.14
-  }
-}
+```text
+examples/scorp-io-basic-flow.json
 ```
 
----
+It runs in `test` mode by default, so it does not publish to the production MQTT broker.
 
-## Références
-- [Documentation SCorp-io MQTTS](https://scorp-io.gitbook.io/guide-to-scorp-io/broker-public/configuration-mqtts)
-- [Node-RED](https://nodered.org)
+## Development
+
+```bash
+npm install
+npm test
+npm run pack:dry-run
+```
+
+## License
+
+MIT

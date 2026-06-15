@@ -1,0 +1,124 @@
+[
+  {
+    "id": "f1f2f3f4f5f6f7f8",
+    "type": "tab",
+    "label": "SCorp-io basic example",
+    "disabled": false,
+    "info": "Example flow for @scorp-io/node-red-contrib-scorp-io. Runs in test mode by default."
+  },
+  {
+    "id": "cfg-scorp-io-example",
+    "type": "scorp-io-config",
+    "name": "SCorp-io test",
+    "clientId": "example-client",
+    "projectId": "my-project",
+    "edgeNodeId": "edge-01",
+    "mode": "test",
+    "login": ""
+  },
+  {
+    "id": "inject-pompe-1",
+    "type": "inject",
+    "z": "f1f2f3f4f5f6f7f8",
+    "name": "Sample DDATA pompe-1",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"pompe1\":{\"etats\":1,\"defaut\":false,\"status\":3.14}}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 120,
+    "wires": [
+      [
+        "scorp-device-example"
+      ]
+    ]
+  },
+  {
+    "id": "inject-birth",
+    "type": "inject",
+    "z": "f1f2f3f4f5f6f7f8",
+    "name": "Force DBIRTH",
+    "props": [
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "birth",
+    "x": 160,
+    "y": 180,
+    "wires": [
+      [
+        "scorp-device-example"
+      ]
+    ]
+  },
+  {
+    "id": "scorp-device-example",
+    "type": "scorp-io-device",
+    "z": "f1f2f3f4f5f6f7f8",
+    "name": "Example pumps",
+    "config": "cfg-scorp-io-example",
+    "devices": [
+      {
+        "deviceId": "pompe-1",
+        "metrics": [
+          {
+            "name": "pompe-1/etats",
+            "dataType": "Integer",
+            "valuePath": "msg.payload.pompe1.etats"
+          },
+          {
+            "name": "pompe-1/defaut",
+            "dataType": "Boolean",
+            "valuePath": "msg.payload.pompe1.defaut"
+          },
+          {
+            "name": "pompe-1/status",
+            "dataType": "Float",
+            "valuePath": "msg.payload.pompe1.status"
+          }
+        ]
+      }
+    ],
+    "birthOnDeploy": true,
+    "birthPeriodic": false,
+    "birthInterval": "24h",
+    "x": 430,
+    "y": 140,
+    "wires": [
+      [
+        "debug-scorp-output"
+      ]
+    ]
+  },
+  {
+    "id": "debug-scorp-output",
+    "type": "debug",
+    "z": "f1f2f3f4f5f6f7f8",
+    "name": "SCorp-io generated message",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 710,
+    "y": 140,
+    "wires": []
+  }
+]

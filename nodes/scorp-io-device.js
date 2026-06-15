@@ -26,6 +26,9 @@ module.exports = function(RED) {
     // Retourne true si au moins une métrique du device est résolvable dans msg
 
     function deviceIsRelevant(device, msg) {
+        if (msg && msg.deviceId && msg.deviceId === device.deviceId) {
+            return true;
+        }
         return device.metrics.some(function(m) {
             return m.valuePath && resolvePath(msg, m.valuePath) !== undefined;
         });
@@ -88,7 +91,7 @@ module.exports = function(RED) {
         // ── Debug output ──────────────────────────────────────────────────────
 
         function emitDebug(msgType, deviceId, topic, payload) {
-            node.send([{
+            node.send({
                 topic:   topic,
                 payload: payload,
                 _scorp: {
@@ -97,7 +100,7 @@ module.exports = function(RED) {
                     device:    deviceId,
                     simulated: isTest
                 }
-            }]);
+            });
         }
 
         // ── Publication DBIRTH (1 device) ─────────────────────────────────────
@@ -204,7 +207,8 @@ module.exports = function(RED) {
         node.config.register(node);
 
         if (isTest) {
-            node.status({ fill: 'blue', shape: 'ring', text: '🧪 Test — ' + node.devices.length + ' device(s)' });
+            const deviceLabel = node.devices.length + ' device' + (node.devices.length > 1 ? 's' : '');
+            node.status({ fill: 'blue', shape: 'ring', text: '🧪 Test — ' + deviceLabel });
             if (node.birthOnDeploy) node.sendAllBirths();
         } else if (node.config.client && node.config.client.connected) {
             node.onConnected();
@@ -236,7 +240,7 @@ module.exports = function(RED) {
         // sinon                 → DDATA routage automatique
 
         node.on('input', function(msg, send, done) {
-            if (msg.topic === 'birth') {
+            if (msg.topic === 'birth' || msg._inputPort === 1) {
                 node.sendAllBirths();
             } else {
                 node.sendDataAuto(msg);

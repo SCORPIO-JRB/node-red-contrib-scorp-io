@@ -35,7 +35,7 @@ function baseFlow(devicesOverride) {
                     ]
                 }
             ],
-            wires: [[], ['dbg1']]
+            wires: [['dbg1']]
         },
         { id: 'dbg1', type: 'helper' }
     ];
