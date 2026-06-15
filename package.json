@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/SCORPIO-JRB/node-red-contrib-scorp-io#readme",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "files": [
     "nodes/",

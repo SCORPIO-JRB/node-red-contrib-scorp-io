@@ -45,7 +45,7 @@ Commands:
 ```bash
 npm login
 npm whoami
-npm publish
+npm publish --access public
 ```
 
 Verify after publication:
