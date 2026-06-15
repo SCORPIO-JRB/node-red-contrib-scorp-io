@@ -1,5 +1,5 @@
 {
-  "name": "@scorp-io/node-red-contrib-scorp-io",
+  "name": "@scorpio-jrb/node-red-contrib-scorp-io",
   "version": "0.1.0",
   "description": "Node-RED nodes for SCorp-io MQTTS integration with DBIRTH and DDATA messages.",
   "keywords": [
@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/SCORPIO-JRB/node-red-contrib-scorp-io#readme",
   "publishConfig": {
-    "access": "public"
+    "registry": "https://npm.pkg.github.com"
   },
   "files": [
     "nodes/",
