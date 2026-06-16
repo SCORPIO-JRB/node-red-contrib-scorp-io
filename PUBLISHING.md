@@ -3,7 +3,7 @@
 This package is prepared for publication as:
 
 ```text
-@scorp-io/node-red-contrib-scorp-io
+node-red-contrib-scorp-io
 ```
 
 ## Sources
@@ -51,7 +51,7 @@ npm publish --access public
 Verify after publication:
 
 ```bash
-npm view @scorp-io/node-red-contrib-scorp-io name version
+npm view node-red-contrib-scorp-io name version
 ```
 
 ## Node-RED Flow Library submission
@@ -63,7 +63,7 @@ After the npm package is public:
 3. Submit:
 
 ```text
-@scorp-io/node-red-contrib-scorp-io
+node-red-contrib-scorp-io
 ```
 
 Node-RED states that the Flow Library no longer auto-indexes npm packages; manual submission is required.
@@ -79,14 +79,14 @@ Node-RED -> Menu -> Manage palette -> Install
 Search for:
 
 ```text
-@scorp-io/node-red-contrib-scorp-io
+node-red-contrib-scorp-io
 ```
 
 CLI equivalent:
 
 ```bash
 cd ~/.node-red
-npm install @scorp-io/node-red-contrib-scorp-io
+npm install node-red-contrib-scorp-io
 ```
 
 Restart Node-RED after installation.
