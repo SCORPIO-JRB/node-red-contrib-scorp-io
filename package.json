@@ -1,5 +1,5 @@
 {
-  "name": "@scorpio-jrb/node-red-contrib-scorp-io",
+  "name": "@scorp-io/node-red-contrib-scorp-io",
   "version": "0.1.0",
   "description": "Node-RED nodes for SCorp-io MQTTS integration with DBIRTH and DDATA messages.",
   "keywords": [

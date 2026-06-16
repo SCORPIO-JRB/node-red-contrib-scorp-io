@@ -1,4 +1,4 @@
-# @scorpio-jrb/node-red-contrib-scorp-io
+# @scorp-io/node-red-contrib-scorp-io
 
 Node-RED nodes for SCorp-io MQTTS integration.
 
@@ -20,7 +20,7 @@ The package exposes a shared SCorp-io configuration node and a multi-device publ
 Open **Menu → Manage palette → Install**, then search for:
 
 ```text
-@scorpio-jrb/node-red-contrib-scorp-io
+@scorp-io/node-red-contrib-scorp-io
 ```
 
 ### From npm
@@ -29,7 +29,7 @@ Run from the Node-RED user directory, usually `~/.node-red`:
 
 ```bash
 cd ~/.node-red
-npm install @scorpio-jrb/node-red-contrib-scorp-io
+npm install @scorp-io/node-red-contrib-scorp-io
 ```
 
 Restart Node-RED after installation.
